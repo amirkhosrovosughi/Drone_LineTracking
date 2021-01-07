@@ -1,8 +1,9 @@
 # Drone Line Tracker
 
-Gazebo simulator with Hector quadrotor (http://mirror.umd.edu/roswiki/hector_quadrotor.html) to train for line tracking
-This is a in progress project
-The code is a modification of:
+Gazebo simulator with Hector quadrotor (http://mirror.umd.edu/roswiki/hector_quadrotor.html) to train for line tracking.
+
+This is a in progress project. 
+The code is a modification of below project:
 
 ```
 https://github.com/TIERS/drone-racing
@@ -14,7 +15,7 @@ The project is yet in early stage of development and not completely functional
 
 ## Requirement
 
-Ubuntu 18.04 with ROS Melodic already installed.
+Ubuntu 18.04 with ROS Melodic, OpenCV
 
 
 
