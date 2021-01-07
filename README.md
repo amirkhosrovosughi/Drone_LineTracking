@@ -9,6 +9,7 @@ https://github.com/TIERS/drone-racing
 
 ```
 For installation, refer to the above link.
+The project is yet in early stage of development and not completely functional
 
 
 ## Requirement
@@ -23,39 +24,31 @@ Ubuntu 18.04 with ROS Melodic already installed.
 Start Gazebo Simularo with command:
 
 ```
-source ~/drone_racing_ws/devel/setup.bash
-roslaunch tiers_drone_racing hector_dronerace.launch
+roslaunch tiers_drone_racing my_world.launch
 ```
 
-Start the motors in another terminal window/tab:
+Spawn the Quarator with embeddad dowward camera with below command
 ```
-source ~/drone_racing_ws/devel/setup.bash
-rosservice call /enable_motors "enable: true"
+roslaunch hector_quadrotor_gazebo spawn_quadrotor_with_downward_cam.launch
 ```
-
-In order to control the UAV with keyboard teleop, install it with
+Start RVIZ for furture analysis with
 ```
-sudo apt install ros-melodic-teleop-twist-keyboard
+rosrun rviz rviz -d `rospack find hector_quadrotor_demo`/rviz_cfg/outdoor_flight.rviz
 ``` 
 
-if you don't have it yet, and run the teleop node in a separate terminal window/tab:
+Run the node for camera vision proseccor with:
 ```
-rosrun tiers_drone_racing tello_controller.py 
-```
-
-## Camera view
-
-Install the `image_view` package:
-```
-sudo apt install ros-melodic-image-view
+rosrun  tiers_drone_racing image_pub_sub.py 
 ```
 
+You should see the original and processed camera frame
+
+Run Hydrid Drone Control node for tello command and autonomous control of the drone thorugh the keyboard
 ```
-rosrun image_view image_view image:=/camera/rgb/image_raw
+rosrun tiers_drone_racing hybrid_controller.py
 ```
+
 
 ## Contact
 
-For any questions, write to `jopequ@utu.fi`.
-
-Visit us at [https://tiers.utu.fi](https://tiers.utu.fi)
+To be added after completing the project
