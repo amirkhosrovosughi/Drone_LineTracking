@@ -46,6 +46,7 @@ You should see the original and processed camera frame
 
 Run Hydrid Drone Control node for tello command and autonomous control of the drone thorugh the keyboard
 ```
+rosservice call /enable_motors "enable: true"
 rosrun tiers_drone_racing hybrid_controller.py
 ```
 
