@@ -1,110 +1,56 @@
-# TIERS Drone Racing 
+# Drone Line Tracker
 
-Gazebo simulator with Hector quadrotor to train for the TIERS drone racing challenge. 
+Gazebo simulator with Hector quadrotor (http://mirror.umd.edu/roswiki/hector_quadrotor.html) to train for line tracking.
 
-The races are later done with a Tello drone controlled via ROS, as part of the master course *Perception and Navigation in Robotics*.
-
-## Get Started
-
-This instructions are for Ubuntu 18.04 with ROS Melodic already installed.
-
-Clone this repo into your workspace (the code below creates a new catkin workspace named `drone_racing_ws` in your home folder):
+This is a in progress project.
+The code is a modification of below project:
 
 ```
-mkdir -p  ~/drone_racing_ws/src && cd ~/drone_racing_ws/src
-git clone --recursive https://github.com/TIERS/drone_racing.git
-```
-
-Install dependencies
+https://github.com/TIERS/drone-racing
 
 ```
-sudo apt install ros-melodic-geographic-msgs ros-melodic-hector-gazebo-plugins ros-melodic-hector-sensors-*
-```
-
-We also need some Gazebo models that we use for the virtual race scenario. You have two opcions here, download the full Gazebo models database, or just a few that we provide to be able to run this simulations. Either way, first create a folder where Gazebo can find your models:
-
-```
-mkdir -p ~/.gazebo/models
-```
-
-### Option 1: Full Gazebo Database
-
-Download Gazebo models database (we actually only use a few of them, this will download the full database with approx. 400MB of basic models):
-
-```
-git clone https://github.com/osrf/gazebo_models/ ~/.gazebo/models
-```
-
-Read more about the Gazebo database [here](http://gazebosim.org/tutorials?tut=model_structure&cat=build_robot).
-
-### Option 2: Minimal amount of models
-
-Copy to the same folder the models included in this repo (change the path if you cloned the repo somewhere else):
-
-```
-cp -r ~/drone_racing_ws/src/drone_racing/gazebo_models/* ~/.gazebo/models/
-```
+For installation, refer to the above link.
+The project is yet in early stage of development and not completely functional
 
 
-## Build the workspace
+## Requirement
 
-We recommend using `catkin build`. Install it if needed with
+Ubuntu 18.04 with ROS Melodic, OpenCV
 
-```
-sudo apt install python-catkin-tools
-```
 
-and then run
 
-```
-cd ~/drone_racing_ws
-catkin init
-catkin build
-```
-
-Build the uav messages with
-```
-catkin build hector_uav_msgs
-```
 
 ## Run the simulator
 
-Run the simulator with
+Start Gazebo Simularo with command:
 
 ```
-source ~/drone_racing_ws/devel/setup.bash
-roslaunch tiers_drone_racing hector_dronerace.launch
+roslaunch tiers_drone_racing my_world.launch
 ```
 
-Start the motors in another terminal window/tab:
+Spawn the Quarator with embeddad dowward camera with below command
 ```
-source ~/drone_racing_ws/devel/setup.bash
+roslaunch hector_quadrotor_gazebo spawn_quadrotor_with_downward_cam.launch
+```
+Start RVIZ for furture analysis with
+```
+rosrun rviz rviz -d `rospack find hector_quadrotor_demo`/rviz_cfg/outdoor_flight.rviz
+```
+
+Run the node for camera vision proseccor with:
+```
+rosrun  tiers_drone_racing image_pub_sub.py
+```
+
+You should see the original and processed camera frame
+
+Run Hydrid Drone Control node for tello command and autonomous control of the drone thorugh the keyboard
+```
 rosservice call /enable_motors "enable: true"
+rosrun tiers_drone_racing hybrid_controller.py
 ```
 
-In order to control the UAV with keyboard teleop, install it with
-```
-sudo apt install ros-melodic-teleop-twist-keyboard
-``` 
-
-if you don't have it yet, and run the teleop node in a separate terminal window/tab:
-```
-rosrun tiers_drone_racing tello_controller.py 
-```
-
-## Camera view
-
-Install the `image_view` package:
-```
-sudo apt install ros-melodic-image-view
-```
-
-```
-rosrun image_view image_view image:=/camera/rgb/image_raw
-```
 
 ## Contact
 
-For any questions, write to `jopequ@utu.fi`.
-
-Visit us at [https://tiers.utu.fi](https://tiers.utu.fi)
+To be added after completing the project

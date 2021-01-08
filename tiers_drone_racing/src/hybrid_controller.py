@@ -261,15 +261,15 @@ def Go_2_center(key):
     # check if updated sample is avialabe
     print('I am going to center')
     # write the code over here
-    x = center_coordinate[0]/240
-    y = center_coordinate[1]/240
-    print ("Center is in {} and {}".format(center_coordinate[0], center_coordinate[1]))
+    x = -center_coordinate[1]/240.0
+    y = -center_coordinate[0]/240.0
     z = 0
     th = 0
-    speed = 0.1
-    turn = 0.1
-    # This is not working, need to understand how .update works exactly, and also ...
-    # make sure that /cmd_vel accept simataneouos linear command in x and y axis
+    speed = 1
+    turn = 1
+    print ("Center is in {} and {}".format(center_coordinate[1], center_coordinate[0]))
+    print ("The setted speed is in {} and {}".format(x*speed, y*speed))
+    # Works now, make it later PID for better performance, add a saturation limit and increase the gain later
     pub_thread.update(x, y, z, th, speed, turn)
     #return x, y, z, th, speed, turn
 
@@ -283,7 +283,7 @@ def Follow_the_line(key):
     th = 0
     speed = 0.05
     turn = 0.05
-    pub_thread.update(x, y, z, th, speed, turn)
+    pub_thread.update(y, x, z, th, speed, turn)
     #return x, y, z, th, speed, turn
 
 if __name__=="__main__":
@@ -378,7 +378,7 @@ if __name__=="__main__":
                 th = 0
 
                 if (key == '\x03'):
-                    print('Here here!')
+                    print('Bye Bye :)')
                     break
             pub_thread.update(x, y, z, th, speed, turn)
 
