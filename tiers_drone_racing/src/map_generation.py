@@ -12,7 +12,10 @@ from sensor_msgs.msg  import Range
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from std_msgs.msg import Int16MultiArray
-#from tf_conversions.transformations import quaternion_from_euler
+
+from EKF_SLAM import My_func
+from EKF_SLAM import EKF_SLAM
+
 
 drone_height = 0
 imag_circle = np.zeros((120, 120))
@@ -21,6 +24,8 @@ bridge = CvBridge()
 
 robot_x = 0
 robot_y = 0
+
+cmd_vel = np.zeros((2,1));
 # subcribe from:
 
 # 1) camera/mask, 2) /sonar_height, 3)tf/tfMessage ==> get time of receiveig (
@@ -81,9 +86,9 @@ def compile_map(MAP_info):
 
 def map_update(MAP_info,robot_x,robot_y,robot_yaw,drone_height):
     # find the corespond pixel to center of robot based on robot_x, robot_y #==> Extend for connsidering pitch, roll
-    # based on heigh and field of view, find required resolution of the map
+    # based on heigh and field of view, find required resolution of the map, width = 90/2, hight = 73.74/2
     # imapge proccesing using opencv
-    # modify map
+    # map_update map
     # compile map
     pass
     #include radian disturtion effects later
@@ -94,9 +99,9 @@ def init_map(map_range, map_resolution):
     object_num = 2 #==> for now, we have only line and circle
 
     x_dimention = int((map_range[0][1]-map_range[0][0])/map_resolution)
-    x_dimention = int((map_range[0][1]-map_range[0][0])/map_resolution)
+    y_dimention = int((map_range[0][1]-map_range[0][0])/map_resolution)
     MAP_info = np.zeros((x_dimention,y_dimention,object_num*2+1))
-    print("Map dimention is: "+ MAP_info.shape)
+    print("Map dimention is: ", MAP_info.shape)
     return MAP_info
 
     # Map_info is data structure to store imag from observation of different sample
@@ -123,13 +128,21 @@ def main(args):
     map_range = [[-10, 10],[-10, 10]]
     MAP_info = init_map(map_range, map_resolution) #==> initialize MAP Data Strcuture
 
+    sampling_time = 2.0
 
+    My_func()
+    slam=EKF_SLAM(sampling_time = 2.0)
 
+    sampling_time = 2.0
+    r = rospy.Rate(1/sampling_time) # 10hz
 
-    r = rospy.Rate(0.5) # 10hz
     while not rospy.is_shutdown():
         print(drone_height)
 
+        slam.move(cmd_vel) #==> move the robot,prediction
+        # Next ==> read the features from the rostopic ==> How we will do association?
+
+        # Real position of the robot, is not used in the algorithm
         now = rospy.Time.now()
         listener.waitForTransform('world', 'base_footprint', now, rospy.Duration(2.0))
         (trans,rot) = listener.lookupTransform('world', 'base_footprint', now)

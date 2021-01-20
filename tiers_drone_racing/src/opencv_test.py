@@ -115,7 +115,10 @@ def main(args):
     #cv2.imshow("Edited_Photo",rgb_image)
     #cv2.imshow("Black Photo",black_image)
 
-    yaw = 35;
+    yaw = 35
+    h = 3
+    c_x = 0
+    c_y = 0
 
 
     backtorgb = cv2.cvtColor(mask,cv2.COLOR_GRAY2RGB)

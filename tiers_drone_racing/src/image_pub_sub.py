@@ -10,6 +10,7 @@ import sys
 import math
 from std_msgs.msg import Int16MultiArray
 
+
 bridge = CvBridge()
 pub = rospy.Publisher('/Processed_imag/rgb_image', Image, queue_size=1)
 edited_imag = np.zeros((2, 2, 2))
@@ -19,10 +20,16 @@ pub3 = rospy.Publisher('/Processed_imag/line_edge', Int16MultiArray, queue_size=
 pub4 = rospy.Publisher('/Processed_imag/mask_circle', Image, queue_size=1)
 pub5 = rospy.Publisher('/Processed_imag/mask_line', Image, queue_size=1)
 
+
+
 center_coordinate = Int16MultiArray()
 center_coordinate.data = []
 edge_coordinate = Int16MultiArray()
 edge_coordinate.data = []
+
+
+
+
 
 def process_contours(binary_image, cv_imag1, contours, type):
     global center_coordinate
@@ -32,6 +39,7 @@ def process_contours(binary_image, cv_imag1, contours, type):
     black_image = np.zeros([binary_image.shape[0], binary_image.shape[1],3],'uint8')
     (rows,cols,channels) = rgb_image.shape
 
+    edge_coordinates_list = []
 
     for c in contours:
 
@@ -49,12 +57,12 @@ def process_contours(binary_image, cv_imag1, contours, type):
                 cv2.circle(rgb_image, (cx,cy), radius=0, color=(255,97, 97), thickness=5)
                 x_coordinate = math.floor(cx - cols/2)
                 y_coordinate = math.floor(cy - rows/2)
-                print ("Center is in {} and {}".format(x_coordinate, y_coordinate))
+                #print ("Center is in {} and {}".format(x_coordinate, y_coordinate))
                 center_coordinate.data = [x_coordinate, y_coordinate]
                 #center_coordinate.data = [cx, cy]
                 pub2.publish(center_coordinate)
-                cv2.imshow("RGB Image Contours - Circle",rgb_image)
-                cv2.imshow("Black Image Contours - Circle",black_image)
+                #cv2.imshow("RGB Image Contours - Circle",rgb_image)
+                #cv2.imshow("Black Image Contours - Circle",black_image)
             elif type == "line":
                 perimeter= cv2.arcLength(c, True)
                 ((x, y), radius) = cv2.minEnclosingCircle(c)
@@ -71,8 +79,8 @@ def process_contours(binary_image, cv_imag1, contours, type):
                 #center_coordinate.data = [x_coordinate, y_coordinate]
                 #center_coordinate.data = [cx, cy]
                 #pub2.publish(center_coordinate)
-                cv2.imshow("RGB Image Contours - Line",rgb_image)
-                cv2.imshow("Black Image Contours - Line",black_image)
+                #cv2.imshow("RGB Image Contours - Line",rgb_image)
+                #cv2.imshow("Black Image Contours - Line",black_image)
             elif type == "line_edge":
                 perimeter= cv2.arcLength(c, True)
                 ((x, y), radius) = cv2.minEnclosingCircle(c)
@@ -85,12 +93,18 @@ def process_contours(binary_image, cv_imag1, contours, type):
                 cv2.circle(rgb_image, (cx,cy), radius=0, color=(255,255, 255), thickness=5)
                 x_coordinate = math.floor(cx - cols/2)
                 y_coordinate = math.floor(cy - rows/2)
-                print ("Line Edge is in {} and {}".format(x_coordinate, y_coordinate))
-                edge_coordinate.data = [x_coordinate, y_coordinate]
-                pub3.publish(edge_coordinate)
-                cv2.imshow("RGB Image Contours - line edge",rgb_image)
+                #print ("Line Edge is in {} and {}".format(x_coordinate, y_coordinate))
+                Edges_Coor = [x_coordinate, y_coordinate]
+                edge_coordinates_list.append(Edges_Coor)
+                #cv2.imshow("RGB Image Contours - line edge",rgb_image)
             else:
                 print('Undefined object code!')
+
+
+    if type == "line_edge":
+        flat_list = [item for sublist in edge_coordinates_list for item in sublist]
+        edge_coordinate.data = flat_list
+        pub3.publish(edge_coordinate)
 
     return rgb_image, black_image
 
@@ -117,7 +131,7 @@ def draw_contours(image, contours, image_name):
 
 def Fill_the_center(mask,width):
     (rows,cols) = mask.shape
-    print ("Center is in {} , {} ".format(rows,cols))
+    #print ("Center is in {} , {} ".format(rows,cols))
     img2	=	cv2.rectangle(mask, (width,width), (cols-width, rows- width), (0,0,0), -1)
     return img2
 
@@ -187,7 +201,7 @@ def image_callback(ros_image):
   # finding the line
   lower_band =(0, 80, 100)
   upper_band = (30, 255, 255)
-  cv2.imshow("Raw Camera 2", cv_image2)
+  #cv2.imshow("Raw Camera 2", cv_image2)
   processed_imag=find_line(cv_image2, processed_imag,lower_band,upper_band)
   # the line ends are published inside the above function
   # Publishing as a topic ==> find out best practice for publishing
@@ -202,6 +216,7 @@ def main(args):
   rospy.init_node('camera_processing', anonymous=True)
   sub_imag = rospy.Subscriber("/downward_cam/camera/image",Image, image_callback)
 
+  pub3.publish(edge_coordinate)
   try:
     rospy.spin()
   except KeyboardInterrupt:

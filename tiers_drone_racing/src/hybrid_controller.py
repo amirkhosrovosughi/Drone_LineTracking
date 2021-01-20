@@ -14,6 +14,7 @@ from sensor_msgs.msg  import Range
 import sys, select, termios, tty
 from std_msgs.msg import Int16MultiArray
 import numpy
+import math
 from subprocess import call
 
 msg = """
@@ -46,6 +47,7 @@ numbers(1,2,3): Select Autonomous Mode
 CTRL-C to quit
 """
 center_coordinate = numpy.zeros(2)
+edge_coordinate = numpy.zeros(2)
 
 moveBindings = {
         'i':(1,0,0,0),
@@ -80,7 +82,8 @@ speedBindings={
 Autonomous_Mode={
         '1':"Go 2 Center",
         '2':"Follow the line",
-        '3':"Hovering",
+        '3':"allgning with line",
+        '4':"Hovering",
     }
 
 
@@ -204,6 +207,12 @@ def center_callback(data0):
     center_coordinate = data0.data
     return data0.data
 
+def edge_callback(data0):
+    global edge_coordinate
+    edge_coordinate = data0.data
+    # Do data assosication over here
+    return data0.data
+
 def cmdvel_pub_thread():
     loop_pub = rospy.Publisher('cmd_vel', Twist, queue_size = 1)
     while(1):
@@ -224,20 +233,25 @@ def deactive_auto(autonomous):
 
 
 def Autonomous_Mode_Execution(mode,key_timeout_1,autonomous):
-    print('Starting the Autonomous mode '+Autonomous_Mode[mode])
+    print('Starting the Autonomous mode '+ Autonomous_Mode[mode])
 
     while not rospy.is_shutdown():
         try:
             # Based on mode (old key) and using if, elif else statement, call the approperiate function and find it
             #print('Hey, I am here in Autonomous while loop ...')
             if mode == '1':
-                Go_2_center(mode)
+                reached_2_center = Go_2_center(mode)
             elif mode == '2':
-                Follow_the_line(mode)
+                reached_end_line=Follow_the_line(mode)
+            elif  mode == '3':
+                alligend_with_line = allign_with_line(mode)
+            elif mode == '4':
+                hovered=hovering(key=mode, h=2)
+
             else:
                 print('Error! Unknown Autonomous mode is selected')
             key = getKey(key_timeout_1)
-            print ('I recive '+key)
+            #print ('I recive '+key)
             if key in moveBindings:
                 print('You are in Autonomous Mode, press s to enable manual control')
             if key in Autonomous_Mode:
@@ -271,20 +285,93 @@ def Go_2_center(key):
     print ("The setted speed is in {} and {}".format(x*speed, y*speed))
     # Works now, make it later PID for better performance, add a saturation limit and increase the gain later
     pub_thread.update(x, y, z, th, speed, turn)
-    #return x, y, z, th, speed, turn
+
+    epsilon = 5;
+    distance = numpy.sqrt(x*x+y*y)
+    reached_2_center = False
+    if distance < epsilon:
+        reached_2_center = True
+    return reached_2_center
+
+
+def allign_with_line(key):
+    print('I am allgning with the line')
+    delta_x = edge_coordinate[0]
+    delta_y = edge_coordinate[1]
+    Angle = math.atan2(delta_x,-delta_y)
+
+    x = 0
+    y = 0
+    z = 0
+    th = -Angle/2
+    speed = 1
+    turn = 1
+    print ("Angle is ", delta_x, "Command is: ",z)
+    pub_thread.update(x, y, z, th, speed, turn)
+
+    epsilon = 0.01
+    alligned = False
+    if Angle < epsilon:
+        alligned = True
+    return alligned
+
+
 
 def Follow_the_line(key):
     # check if updated sample is avialabe
     print('I am following the line')
     # write the code over here
-    x = center_coordinate[0]/240
-    y = center_coordinate[1]/240
+
+    # Check to see if it reaches the next pole
+
+    delta_x = center_coordinate[0]
+    delta_y = center_coordinate[1]
+
+    if  (delta_x > -60 and delta_x < 60) and delta_y < -80:
+        print('Reach the next pole!')
+        return True
+
+
+
+    x = 0.2
+    y = 0
     z = 0
+    # check if there is a deviation in edge_coordinate
+    th = 0 # -delta_x/20
+    speed = 1
+    turn = 1
+    pub_thread.update(x, y, z, th, speed, turn)
+
+    return False
+
+
+def hovering(key, h):
+    z_speed = (h-drone_height)*0.2
+
+    x = 0
+    y = 0
+    z = z_speed
     th = 0
-    speed = 0.05
-    turn = 0.05
-    pub_thread.update(y, x, z, th, speed, turn)
-    #return x, y, z, th, speed, turn
+    speed = 1
+    turn = 1
+    pub_thread.update(x, y, z, th, speed, turn)
+
+
+    if h-drone_height < 0.1:
+        return True
+    return False
+
+
+
+
+
+
+
+
+
+
+
+
 
 if __name__=="__main__":
 
@@ -314,6 +401,7 @@ if __name__=="__main__":
 
     rospy.Subscriber("/sonar_height", Range, sonar_callback)
     rospy.Subscriber("/Processed_imag/center", Int16MultiArray, center_callback)
+    rospy.Subscriber("/Processed_imag/line_edge", Int16MultiArray, edge_callback)
 
     try:
         pub_thread.wait_for_subscribers()

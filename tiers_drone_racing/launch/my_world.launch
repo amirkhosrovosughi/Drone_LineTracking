@@ -3,7 +3,7 @@
 <launch>
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-      <arg name="world_name" value="$(find tiers_drone_racing)/gazebo/wall_world.sdf"/>
+      <arg name="world_name" value="$(find tiers_drone_racing)/gazebo/Line_world.sdf"/>
   </include>
 
 </launch>
